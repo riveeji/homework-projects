@@ -13,7 +13,8 @@
 ```text
 cpp/
 ├─ OS/                    # 操作系统实验与课设
-├─ WTA/                   # Weapon-Target Assignment（优化/仿真）
+├─ WTA/                   # WTA 基础版本（建模 + 可视化导出）
+├─ AMP/                   # WTA 扩展实验（多算法对比 + 基准结果）
 ├─ 哈希表/                 # C 语言哈希表与链表实现
 ├─ socket/                # 简易 HTTP Socket 服务端
 ├─ Project1~Project14/    # 课程阶段性练习（多为算法题）
@@ -30,6 +31,8 @@ cpp/
 | `OS/实验三` | 动态分区存储管理（首次/最佳/最坏适应） | `OS/实验三/Project3/动态分区式存贮区管理.cpp` |
 | `OS/实验四` | 页面置换算法（FIFO/LRU） | `OS/实验四/Project4/置换算法.cpp` |
 | `WTA` | 武器目标分配（WTA）问题建模与求解、结果可视化数据导出 | `WTA/WTA/wta.cpp` |
+| `AMP` | WTA 扩展实验：贪心/“匈牙利”/模拟退火/遗传算法对比，附多规模 JSON 结果 | `AMP/AMP/amp.cpp` |
+| `Project15`（位于 `AMP` 内） | 另一版 WTA 求解框架实现 | `AMP/Project15/FileName.cpp` |
 | `哈希表` | C 语言链表 + 哈希表基础实现 | `哈希表/哈希表/HASH.c` |
 | `socket` | 跨平台简易 HTTP 服务器示例（Win/Linux 条件编译） | `socket/socket/FileName.cpp` |
 | `Project2` | 顺序表（动态扩容、内存分配容错） | `Project2/Project2/FileName.cpp` |
@@ -64,6 +67,7 @@ g++ -std=c++17 -O2 -o demo "OS/实验四/Project4/置换算法.cpp"
 ## Notes
 
 - 仓库中保留了部分编译产物（如 `x64/Debug/*.exe`、`.obj`、`.pdb`、`.tlog`），用于课程阶段留档。
+- `AMP/AMP` 目录中包含多算法测试结果（JSON），可用于实验报告和性能对比展示。
 - 若后续需要精简仓库体积，建议补充 `.gitignore` 并清理构建中间文件。
 
 ## License
