@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WTA武器-目标分配军事仿真系统</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --military-green: #2d4a2b;
+            --dark-green: #1a2f1a;
+            --olive: #4a5d23;
+            --desert-tan: #c19a6b;
+            --steel-gray: #708090;
+            --gunmetal: #2a3439;
+            --amber: #ffbf00;
+            --warning-orange: #ff8c00;
+            --danger-red: #dc143c;
+            --success-green: #228b22;
+            --bg-primary: rgba(26, 47, 26, 0.95);
+            --bg-secondary: rgba(42, 52, 57, 0.9);
+            --glass-military: rgba(45, 74, 43, 0.85);
+            --border-military: rgba(193, 154, 107, 0.4);
+            --text-primary: #f5f5dc;
+            --text-secondary: #d3d3d3;
+            --text-accent: #ffbf00;
+            --shadow-military: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Microsoft YaHei', sans-serif;
+            background: var(--dark-green);
+            color: var(--text-primary);
+            overflow: hidden;
+            user-select: none;
+            cursor: crosshair;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(45, 74, 43, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(193, 154, 107, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #1a2f1a 0%, #2d4a2b 50%, #1a2f1a 100%);
+            pointer-events: none;
+        }
+        
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .scene-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .panel {
+            background: linear-gradient(135deg, 
+                var(--glass-military) 0%, 
+                var(--bg-secondary) 50%, 
+                var(--glass-military) 100%);
+            backdrop-filter: blur(15px);
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid var(--border-military);
+            box-shadow: var(--shadow-military);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+            position: relative;
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                var(--amber) 0%, 
+                var(--desert-tan) 50%, 
+                var(--amber) 100%);
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border-color: var(--amber);
+        }
+        
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 380px;
+        }
+        
+        .stats-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+        }
+        
+        .legend-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 280px;
+        }
+        
+        .benchmark-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+        }
+        
+        .panel-title {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--amber);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-military);
+            padding-bottom: 8px;
+        }
+        
+        .panel-title .icon {
+            font-size: 20px;
+            color: var(--amber);
+        }
+        
+        .control-group {
+            margin-bottom: 18px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .control-value {
+            color: var(--amber);
+            font-weight: 700;
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--steel-gray);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            border: 1px solid var(--border-military);
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            background: linear-gradient(135deg, var(--amber), var(--desert-tan));
+            cursor: pointer;
+            border: 2px solid var(--gunmetal);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 191, 0, 0.4);
+        }
+        
+        .select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-military);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        .select:hover, .select:focus {
+            border-color: var(--amber);
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 191, 0, 0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--military-green), var(--olive));
+            color: var(--text-primary);
+            border: 2px solid var(--border-military);
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Roboto Mono', monospace;
+            transition: all 0.3s ease;
+            margin: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            border-color: var(--amber);
+            background: linear-gradient(135deg, var(--olive), var(--military-green));
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn.danger {
+            background: linear-gradient(135deg, var(--danger-red), #b71c1c);
+            border-color: var(--danger-red);
+        }
+        
+        .btn.success {
+            background: linear-gradient(135deg, var(--success-green), #1b5e20);
+            border-color: var(--success-green);
+        }
+        
+        .btn.warning {
+            background: linear-gradient(135deg, var(--warning-orange), #e65100);
+            border-color: var(--warning-orange);
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border-left: 4px solid var(--amber);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateX(3px);
+            background: rgba(112, 128, 144, 0.2);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            color: var(--amber);
+            font-weight: 700;
+            font-size: 16px;
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .legend-item:hover {
+            transform: translateX(5px);
+            color: var(--amber);
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 12px;
+            border: 1px solid var(--border-military);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--steel-gray);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+            border: 1px solid var(--border-military);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success-green), var(--amber));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--dark-green), var(--gunmetal));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.6s ease;
+        }
+        
+        .loading-title {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--amber);
+            margin-bottom: 30px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--steel-gray);
+            border-top: 4px solid var(--amber);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .performance-panel {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            background: var(--bg-secondary);
+            color: var(--success-green);
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            border: 1px solid var(--border-military);
+            backdrop-filter: blur(10px);
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--glass-military);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid var(--border-military);
+            backdrop-filter: blur(15px);
+            box-shadow: var(--shadow-military);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            max-width: 350px;
+            min-width: 300px;
+        }
+        
+        .info-panel.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .info-title {
+            color: var(--amber);
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Roboto Mono', monospace;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .info-content {
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .info-content p {
+            margin-bottom: 8px;
+        }
+        
+        .info-content strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+        
+        .benchmark-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .benchmark-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .benchmark-item:hover {
+            background: rgba(112, 128, 144, 0.3);
+            border-left-color: var(--amber);
+        }
+        
+        .benchmark-item.active {
+            background: rgba(255, 191, 0, 0.1);
+            border-left-color: var(--amber);
+        }
+        
+        .benchmark-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .benchmark-size {
+            font-family: 'Roboto Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .control-panel, .stats-panel {
+                width: 300px;
+            }
+            
+            .legend-panel, .benchmark-panel {
+                width: 250px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .control-panel, .stats-panel, .legend-panel, .benchmark-panel {
+                position: relative;
+                margin: 10px;
+                width: auto;
+            }
+            
+            .performance-panel {
+                display: none;
+            }
+            
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 可访问性 */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loading" id="loading">
+            <div class="loading-title">初始化军事仿真系统</div>
+            <div class="loading-spinner"></div>
+        </div>
+        
+        <div class="scene-container" id="scene-container"></div>
+        
+        <div class="info-panel" id="infoPanel">
+            <div class="info-title" id="infoTitle">目标信息</div>
+            <div class="info-content" id="infoContent"></div>
+        </div>
+        
+        <div class="ui-overlay">
+            <div class="panel control-panel">
+                <div class="panel-title">
+                    <span class="icon">⚙️</span>
+                    <span>作战控制台</span>
+                </div>
+                
+                <div class="control-group">
+                    <label>武器系统: <span class="control-value" id="weaponCountValue">10</span></label>
+                    <input type="range" class="slider" id="weaponCount" min="5" max="200" value="10" step="5">
+                </div>
+                
+                <div class="control-group">
+                    <label>敌方目标: <span class="control-value" id="targetCountValue">10</span></label>
+                    <input type="range" class="slider" id="targetCount" min="5" max="200" value="10" step="5">
+                </div>
+                
+                <div class="control-group">
+                    <label>求解算法:</label>
+                    <select class="select" id="algorithmSelect">
+                        <option value="genetic">遗传算法 (GA)</option>
+                        <option value="simulated">模拟退火 (SA)</option>
+                    </select>
+                </div>
+                
+                <div class="controls-grid">
+                    <button class="btn" id="generateBtn">🎲 生成场景</button>
+                    <button class="btn success" id="solveBtn">🎯 开始求解</button>
+                    <button class="btn warning" id="animateBtn">▶️ 作战演示</button>
+                    <button class="btn danger" id="resetBtn">🔄 重置视角</button>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            
+            <div class="panel stats-panel">
+                <div class="panel-title">
+                    <span class="icon">📊</span>
+                    <span>作战数据分析</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">🎯 适应度值</span>
+                    <span class="stat-value" id="totalFitness">0.00</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">💰 目标价值</span>
+                    <span class="stat-value" id="totalValue">0.00</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">📈 分配效率</span>
+                    <span class="stat-value" id="assignmentRate">0%</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">⏱️ 计算时间</span>
+                    <span class="stat-value" id="computationTime">0ms</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">🔄 迭代次数</span>
+                    <span class="stat-value" id="iterations">0</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">🎯 覆盖目标</span>
+                    <span class="stat-value" id="targetCoverage">0/0</span>
+                </div>
+            </div>
+            
+            <div class="panel legend-panel">
+                <div class="panel-title">
+                    <span class="icon">🗺️</span>
+                    <span>战场标识</span>
+                </div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #4a5d23, #2d4a2b);"></div>
+                    <span>防空导弹系统</span>
+                </div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #228b22, #32cd32);"></div>
+                    <span>低价值目标</span>
+                </div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #ffbf00, #ffd700);"></div>
+                    <span>中价值目标</span>
+                </div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #ff8c00, #dc143c);"></div>
+                    <span>高价值目标</span>
+                </div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #c19a6b, #daa520);"></div>
+                    <span>攻击路径</span>
+                </div>
+            </div>
+            
+            <div class="panel benchmark-panel">
+                <div class="panel-title">
+                    <span class="icon">📋</span>
+                    <span>标准测试集</span>
+                </div>
+                
+                <div class="benchmark-list" id="benchmarkList">
+                    <!-- 动态生成WTA1-WTA12选项 -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="performance-panel" id="performancePanel">
+            FPS: <span id="fpsCounter">0</span><br>
+            Objects: <span id="objectCount">0</span><br>
+            Render: <span id="renderTime">0ms</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // WTA标准测试问题配置
+        const WTA_BENCHMARKS = [
+            { name: 'WTA1', weapons: 5, targets: 5 },
+            { name: 'WTA2', weapons: 10, targets: 10 },
+            { name: 'WTA3', weapons: 20, targets: 20 },
+            { name: 'WTA4', weapons: 30, targets: 30 },
+            { name: 'WTA5', weapons: 40, targets: 40 },
+            { name: 'WTA6', weapons: 50, targets: 50 },
+            { name: 'WTA7', weapons: 60, targets: 60 },
+            { name: 'WTA8', weapons: 70, targets: 70 },
+            { name: 'WTA9', weapons: 80, targets: 80 },
+            { name: 'WTA10', weapons: 90, targets: 90 },
+            { name: 'WTA11', weapons: 100, targets: 100 },
+            { name: 'WTA12', weapons: 200, targets: 200 }
+        ];
+
+        // 系统配置参数
+        const CONFIG = {
+            maxIterations: 100,
+            populationSize: 20,
+            mutationRate: 0.1,
+            temperature: 100,
+            coolingRate: 0.95,
+            sceneRadius: 40,
+            // 按文档要求的参数范围
+            targetValueRange: { min: 25, max: 100 },
+            killProbRange: { min: 0.60, max: 0.90 }
+        };
+
+        // WTA算法实现
+        class WTAAlgorithms {
+            static geneticAlgorithm(problem, onProgress) {
+                const { numWeapons, numTargets } = problem;
+                let population = this.initializePopulation(numWeapons, numTargets, CONFIG.populationSize);
+                
+                let bestFitness = -Infinity;
+                let bestSolution = null;
+                let iterations = 0;
+                
+                for (let gen = 0; gen < CONFIG.maxIterations; gen++) {
+                    iterations = gen + 1;
+                    
+                    const fitness = population.map(individual => 
+                        this.calculateFitness(individual, problem));
+                    
+                    const maxFitness = Math.max(...fitness);
+                    if (maxFitness > bestFitness) {
+                        bestFitness = maxFitness;
+                        bestSolution = population[fitness.indexOf(maxFitness)].slice();
+                    }
+                    
+                    // 进度更新
+                    if (onProgress && gen % 5 === 0) {
+                        onProgress((gen / CONFIG.maxIterations) * 100);
+                    }
+                    
+                    const newPopulation = [];
+                    const elite = this.selectElite(population, fitness, 2);
+                    newPopulation.push(...elite);
+                    
+                    while (newPopulation.length < CONFIG.populationSize) {
+                        const parent1 = this.tournamentSelection(population, fitness);
+                        const parent2 = this.tournamentSelection(population, fitness);
+                        let child = this.crossover(parent1, parent2);
+                        
+                        if (Math.random() < CONFIG.mutationRate) {
+                            child = this.mutate(child, numTargets);
+                        }
+                        
+                        newPopulation.push(child);
+                    }
+                    
+                    population = newPopulation;
+                }
+                
+                return { solution: bestSolution, fitness: bestFitness, iterations };
+            }
+            
+            static simulatedAnnealing(problem, onProgress) {
+                const { numWeapons, numTargets } = problem;
+                let current = this.randomSolution(numWeapons, numTargets);
+                let currentFitness = this.calculateFitness(current, problem);
+                let best = current.slice();
+                let bestFitness = currentFitness;
+                let temperature = CONFIG.temperature;
+                let iterations = 0;
+                
+                for (let i = 0; i < CONFIG.maxIterations; i++) {
+                    iterations = i + 1;
+                    
+                    let neighbor = this.getNeighbor(current, numTargets);
+                    let neighborFitness = this.calculateFitness(neighbor, problem);
+                    
+                    if (neighborFitness > bestFitness) {
+                        best = neighbor.slice();
+                        bestFitness = neighborFitness;
+                    }
+                    
+                    if (neighborFitness > currentFitness || 
+                        Math.random() < Math.exp((neighborFitness - currentFitness) / temperature)) {
+                        current = neighbor;
+                        currentFitness = neighborFitness;
+                    }
+                    
+                    temperature *= CONFIG.coolingRate;
+                    
+                    // 进度更新
+                    if (onProgress && i % 5 === 0) {
+                        onProgress((i / CONFIG.maxIterations) * 100);
+                    }
+                }
+                
+                return { solution: best, fitness: bestFitness, iterations };
+            }
+            
+            static initializePopulation(numWeapons, numTargets, size) {
+                const population = [];
+                for (let i = 0; i < size; i++) {
+                    population.push(this.randomSolution(numWeapons, numTargets));
+                }
+                return population;
+            }
+            
+            static randomSolution(numWeapons, numTargets) {
+                const solution = new Array(numWeapons);
+                for (let i = 0; i < numWeapons; i++) {
+                    // 80%概率分配目标，20%概率不分配
+                    solution[i] = Math.random() < 0.8 ? Math.floor(Math.random() * numTargets) : -1;
+                }
+                return solution;
+            }
+            
+            static selectElite(population, fitness, count) {
+                const sorted = population
+                    .map((individual, index) => ({ individual, fitness: fitness[index] }))
+                    .sort((a, b) => b.fitness - a.fitness);
+                return sorted.slice(0, count).map(item => item.individual.slice());
+            }
+            
+            static tournamentSelection(population, fitness, size = 3) {
+                let best = Math.floor(Math.random() * population.length);
+                for (let i = 1; i < size; i++) {
+                    const candidate = Math.floor(Math.random() * population.length);
+                    if (fitness[candidate] > fitness[best]) {
+                        best = candidate;
+                    }
+                }
+                return population[best].slice();
+            }
+            
+            static crossover(parent1, parent2) {
+                const child = new Array(parent1.length);
+                for (let i = 0; i < parent1.length; i++) {
+                    child[i] = Math.random() < 0.5 ? parent1[i] : parent2[i];
+                }
+                return child;
+            }
+            
+            static mutate(individual, numTargets) {
+                const mutated = individual.slice();
+                const index = Math.floor(Math.random() * individual.length);
+                mutated[index] = Math.random() < 0.5 ? -1 : Math.floor(Math.random() * numTargets);
+                return mutated;
+            }
+            
+            static getNeighbor(solution, numTargets) {
+                const neighbor = solution.slice();
+                const index = Math.floor(Math.random() * solution.length);
+                neighbor[index] = Math.random() < 0.5 ? -1 : Math.floor(Math.random() * numTargets);
+                return neighbor;
+            }
+            
+            static calculateFitness(solution, problem) {
+                const { numTargets, targetValues, killProb } = problem;
+                let totalValue = 0;
+                
+                for (let w = 0; w < solution.length; w++) {
+                    const target = solution[w];
+                    if (target >= 0 && target < numTargets) {
+                        totalValue += targetValues[target] * killProb[w][target];
+                    }
+                }
+                
+                return totalValue;
+            }
+        }
+
+        // 军事仿真可视化系统
+        class MilitaryWTAVisualizer {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.weapons = [];
+                this.targets = [];
+                this.assignmentLines = [];
+                this.missiles = [];
+                this.problem = null;
+                this.solution = null;
+                this.isAnimating = false;
+                this.currentBenchmark = null;
+                
+                this.cameraController = {
+                    radius: 80,
+                    theta: 0,
+                    phi: Math.PI / 4,
+                    target: new THREE.Vector3(0, 0, 0),
+                    isDragging: false,
+                    autoRotate: true,
+                    previousMouse: { x: 0, y: 0 }
+                };
+                
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
+                this.hoveredObject = null;
+                
+                this.stats = { 
+                    fps: 0, 
+                    frames: 0, 
+                    lastTime: performance.now(),
+                    renderTime: 0
+                };
+                
+                this.init();
+            }
+            
+            async init() {
+                try {
+                    this.initBenchmarkPanel();
+                    this.initThreeJS();
+                    this.setupEventListeners();
+                    this.generateProblem();
+                    this.startRenderLoop();
+                    
+                    // 隐藏加载画面
+                    setTimeout(() => {
+                        const loading = document.getElementById('loading');
+                        if (loading) {
+                            loading.style.opacity = '0';
+                            setTimeout(() => {
+                                loading.style.display = 'none';
+                            }, 600);
+                        }
+                    }, 1500);
+                } catch (error) {
+                    console.error('系统初始化失败:', error);
+                    alert('军事仿真系统初始化失败：' + error.message);
+                }
+            }
+            
+            initBenchmarkPanel() {
+                const benchmarkList = document.getElementById('benchmarkList');
+                WTA_BENCHMARKS.forEach((benchmark, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'benchmark-item';
+                    item.innerHTML = `
+                        <span class="benchmark-name">${benchmark.name}</span>
+                        <span class="benchmark-size">${benchmark.weapons}×${benchmark.targets}</span>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        // 清除之前的选中状态
+                        document.querySelectorAll('.benchmark-item').forEach(el => 
+                            el.classList.remove('active'));
+                        item.classList.add('active');
+                        
+                        // 设置参数
+                        this.currentBenchmark = benchmark;
+                        this.loadBenchmark(benchmark);
+                    });
+                    
+                    benchmarkList.appendChild(item);
+                });
+            }
+            
+            loadBenchmark(benchmark) {
+                const weaponSlider = document.getElementById('weaponCount');
+                const targetSlider = document.getElementById('targetCount');
+                
+                weaponSlider.value = benchmark.weapons;
+                targetSlider.value = benchmark.targets;
+                
+                document.getElementById('weaponCountValue').textContent = benchmark.weapons;
+                document.getElementById('targetCountValue').textContent = benchmark.targets;
+                
+                // 自动生成新场景
+                this.generateProblem();
+            }
+            
+            initThreeJS() {
+                const container = document.getElementById('scene-container');
+                if (!container) {
+                    throw new Error('场景容器未找到');
+                }
+                
+                // 创建场景
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x2f4f2f);
+                this.scene.fog = new THREE.Fog(0x2f4f2f, 50, 500);
+                
+                // 创建相机
+                this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.updateCameraPosition();
+                
+                // 创建渲染器
+                this.renderer = new THREE.WebGLRenderer({ 
+                    antialias: true, 
+                    alpha: false,
+                    powerPreference: "high-performance"
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                
+                container.appendChild(this.renderer.domElement);
+                
+                this.setupMilitaryScene();
+            }
+            
+            setupMilitaryScene() {
+                // 环境光
+                const ambientLight = new THREE.AmbientLight(0x404040, 1.0);
+                this.scene.add(ambientLight);
+                
+                // 主光源 - 模拟阳光
+                const directionalLight = new THREE.DirectionalLight(0xffffcc, 1.8);
+                directionalLight.position.set(100, 100, 50);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 500;
+                directionalLight.shadow.camera.left = -200;
+                directionalLight.shadow.camera.right = 200;
+                directionalLight.shadow.camera.top = 200;
+                directionalLight.shadow.camera.bottom = -200;
+                this.scene.add(directionalLight);
+                
+                // 辅助光源
+                const fillLight = new THREE.DirectionalLight(0x87ceeb, 0.6);
+                fillLight.position.set(-50, 30, -50);
+                this.scene.add(fillLight);
+                
+                // 创建地形
+                this.createTerrain();
+                
+                // 创建天空盒
+                this.createSkybox();
+            }
+            
+            createTerrain() {
+                // 地面
+                const groundGeometry = new THREE.PlaneGeometry(500, 500, 100, 100);
+                const groundMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x3a5f3a,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                
+                // 添加地形起伏
+                const vertices = groundGeometry.attributes.position.array;
+                for (let i = 0; i < vertices.length; i += 3) {
+                    vertices[i + 2] = Math.sin(vertices[i] * 0.01) * Math.cos(vertices[i + 1] * 0.01) * 3;
+                }
+                groundGeometry.attributes.position.needsUpdate = true;
+                groundGeometry.computeVertexNormals();
+                
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+                
+                // 网格线
+                const gridHelper = new THREE.GridHelper(500, 50, 0x4a5d23, 0x2d4a2b);
+                gridHelper.material.opacity = 0.5;
+                gridHelper.material.transparent = true;
+                this.scene.add(gridHelper);
+            }
+            
+            createSkybox() {
+                // 创建简单的天空盒
+                const skyGeometry = new THREE.SphereGeometry(400, 32, 32);
+                const skyMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x87ceeb,
+                    transparent: true,
+                    opacity: 0.3,
+                    side: THREE.BackSide
+                });
+                const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+                this.scene.add(sky);
+                
+                // 添加云朵效果
+                for (let i = 0; i < 20; i++) {
+                    const cloudGeometry = new THREE.SphereGeometry(
+                        10 + Math.random() * 20, 8, 6);
+                    const cloudMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.7
+                    });
+                    const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+                    cloud.position.set(
+                        (Math.random() - 0.5) * 600,
+                        50 + Math.random() * 100,
+                        (Math.random() - 0.5) * 600
+                    );
+                    cloud.scale.set(
+                        1 + Math.random(),
+                        0.5 + Math.random() * 0.5,
+                        1 + Math.random()
+                    );
+                    this.scene.add(cloud);
+                }
+            }
+            
+            setupEventListeners() {
+                // 滑块事件
+                document.getElementById('weaponCount').addEventListener('input', (e) => {
+                    document.getElementById('weaponCountValue').textContent = e.target.value;
+                });
+                
+                document.getElementById('targetCount').addEventListener('input', (e) => {
+                    document.getElementById('targetCountValue').textContent = e.target.value;
+                });
+                
+                // 按钮事件
+                document.getElementById('generateBtn').addEventListener('click', () => this.generateProblem());
+                document.getElementById('solveBtn').addEventListener('click', () => this.solveProblem());
+                document.getElementById('animateBtn').addEventListener('click', () => this.toggleAnimation());
+                document.getElementById('resetBtn').addEventListener('click', () => this.resetCamera());
+                
+                // 鼠标控制
+                this.setupMouseControls();
+                
+                // 窗口调整
+                window.addEventListener('resize', () => this.onWindowResize());
+                
+                // 键盘快捷键
+                this.setupKeyboardControls();
+            }
+            
+            setupMouseControls() {
+                const canvas = this.renderer.domElement;
+                
+                canvas.addEventListener('mousedown', (e) => {
+                    if (e.button === 0) {
+                        this.cameraController.isDragging = true;
+                        this.cameraController.autoRotate = false;
+                        this.cameraController.previousMouse = { x: e.clientX, y: e.clientY };
+                        canvas.style.cursor = 'grabbing';
+                    }
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                    this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                    
+                    if (this.cameraController.isDragging) {
+                        const deltaX = e.clientX - this.cameraController.previousMouse.x;
+                        const deltaY = e.clientY - this.cameraController.previousMouse.y;
+                        
+                        this.cameraController.theta -= deltaX * 0.005;
+                        this.cameraController.phi = Math.max(0.1, Math.min(Math.PI - 0.1, 
+                            this.cameraController.phi + deltaY * 0.005));
+                        
+                        this.updateCameraPosition();
+                        this.cameraController.previousMouse = { x: e.clientX, y: e.clientY };
+                    } else {
+                        this.checkHover();
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    this.cameraController.isDragging = false;
+                    canvas.style.cursor = 'crosshair';
+                    setTimeout(() => {
+                        if (!this.cameraController.isDragging) {
+                            this.cameraController.autoRotate = true;
+                        }
+                    }, 2000);
+                });
+                
+                canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const zoom = e.deltaY * 0.001;
+                    this.cameraController.radius = Math.max(30, Math.min(200, 
+                        this.cameraController.radius * (1 + zoom)));
+                    this.updateCameraPosition();
+                });
+            }
+            
+            setupKeyboardControls() {
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key.toLowerCase()) {
+                        case 'g': 
+                            e.preventDefault();
+                            this.generateProblem(); 
+                            break;
+                        case 's': 
+                            if (!e.ctrlKey) {
+                                e.preventDefault();
+                                this.solveProblem(); 
+                            }
+                            break;
+                        case 'a': 
+                            e.preventDefault();
+                            this.toggleAnimation(); 
+                            break;
+                        case 'r': 
+                            if (!e.ctrlKey) {
+                                e.preventDefault();
+                                this.resetCamera(); 
+                            }
+                            break;
+                        case ' ':
+                            e.preventDefault();
+                            this.cameraController.autoRotate = !this.cameraController.autoRotate;
+                            break;
+                    }
+                });
+            }
+            
+            updateCameraPosition() {
+                const { radius, theta, phi, target } = this.cameraController;
+                this.camera.position.x = target.x + radius * Math.sin(phi) * Math.cos(theta);
+                this.camera.position.y = target.y + radius * Math.cos(phi);
+                this.camera.position.z = target.z + radius * Math.sin(phi) * Math.sin(theta);
+                this.camera.lookAt(target);
+            }
+            
+            generateProblem() {
+                const weaponCount = parseInt(document.getElementById('weaponCount').value);
+                const targetCount = parseInt(document.getElementById('targetCount').value);
+                
+                this.clearObjects();
+                this.problem = this.createWTAProblem(weaponCount, targetCount);
+                this.createWeapons();
+                this.createTargets();
+                this.updateStats();
+                
+                // 进度动画
+                this.updateProgress(100);
+                setTimeout(() => this.updateProgress(0), 1500);
+            }
+            
+            createWTAProblem(weaponCount, targetCount) {
+                const problem = {
+                    numWeapons: weaponCount,
+                    numTargets: targetCount,
+                    targetValues: [],
+                    killProb: []
+                };
+                
+                // 按文档要求生成目标价值 (25-100)
+                for (let i = 0; i < targetCount; i++) {
+                    const value = CONFIG.targetValueRange.min + 
+                        Math.random() * (CONFIG.targetValueRange.max - CONFIG.targetValueRange.min);
+                    problem.targetValues.push(value);
+                }
+                
+                // 按文档要求生成杀伤概率 (0.60-0.90)
+                for (let i = 0; i < weaponCount; i++) {
+                    problem.killProb[i] = [];
+                    for (let j = 0; j < targetCount; j++) {
+                        const prob = CONFIG.killProbRange.min + 
+                            Math.random() * (CONFIG.killProbRange.max - CONFIG.killProbRange.min);
+                        problem.killProb[i][j] = prob;
+                    }
+                }
+                
+                return problem;
+            }
+            
+            createWeapons() {
+                const radius = CONFIG.sceneRadius;
+                const weaponCount = this.problem.numWeapons;
+                
+                for (let i = 0; i < weaponCount; i++) {
+                    const angle = (i / weaponCount) * Math.PI * 2;
+                    const weapon = this.createRealisticWeaponModel();
+                    
+                    // 分散部署
+                    const deployRadius = radius + Math.random() * 20;
+                    weapon.position.set(
+                        Math.cos(angle) * deployRadius,
+                        2,
+                        Math.sin(angle) * deployRadius
+                    );
+                    
+                    weapon.lookAt(0, 10, 0);
+                    weapon.userData = { type: 'weapon', id: i };
+                    
+                    this.scene.add(weapon);
+                    this.weapons.push(weapon);
+                    
+                    // 入场动画
+                    weapon.scale.set(0, 0, 0);
+                    this.animateObjectEntry(weapon, i * 50);
+                }
+            }
+            
+            createRealisticWeaponModel() {
+                const group = new THREE.Group();
+                
+                // 发射车底盘
+                const chassisGeometry = new THREE.BoxGeometry(6, 1.5, 3);
+                const chassisMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x4a5d23,
+                    shininess: 30
+                });
+                const chassis = new THREE.Mesh(chassisGeometry, chassisMaterial);
+                chassis.castShadow = true;
+                chassis.receiveShadow = true;
+                group.add(chassis);
+                
+                // 履带
+                for (let i = 0; i < 2; i++) {
+                    const trackGeometry = new THREE.CylinderGeometry(0.5, 0.5, 5.5, 8);
+                    const trackMaterial = new THREE.MeshPhongMaterial({ color: 0x2d4a2b });
+                    const track = new THREE.Mesh(trackGeometry, trackMaterial);
+                    track.position.set(i === 0 ? -2 : 2, -1, 0);
+                    track.rotation.z = Math.PI / 2;
+                    track.castShadow = true;
+                    group.add(track);
+                }
+                
+                // 导弹发射架
+                const launcherGeometry = new THREE.BoxGeometry(4, 2, 2);
+                const launcherMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x708090,
+                    shininess: 50
+                });
+                const launcher = new THREE.Mesh(launcherGeometry, launcherMaterial);
+                launcher.position.y = 2;
+                launcher.castShadow = true;
+                group.add(launcher);
+                
+                // 单枚导弹 - 符合WTA问题逻辑
+                const missileGeometry = new THREE.CylinderGeometry(0.2, 0.25, 4, 8);
+                const missileMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xc0c0c0,
+                    shininess: 100
+                });
+                const missile = new THREE.Mesh(missileGeometry, missileMaterial);
+                missile.position.set(0, 4, 0);
+                missile.castShadow = true;
+                group.add(missile);
+                
+                // 雷达天线
+                const radarGeometry = new THREE.ConeGeometry(1, 2, 8);
+                const radarMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xdaa520,
+                    shininess: 80
+                });
+                const radar = new THREE.Mesh(radarGeometry, radarMaterial);
+                radar.position.set(-2, 4, 0);
+                radar.castShadow = true;
+                group.add(radar);
+                
+                return group;
+            }
+            
+            createTargets() {
+                const radius = CONFIG.sceneRadius * 2;
+                const targetCount = this.problem.numTargets;
+                
+                for (let i = 0; i < targetCount; i++) {
+                    const angle = (i / targetCount) * Math.PI * 2;
+                    const target = this.createRealisticTargetModel(this.problem.targetValues[i]);
+                    
+                    // 分散部署
+                    const deployRadius = radius + Math.random() * 30;
+                    const height = 5 + Math.random() * 10;
+                    target.position.set(
+                        Math.cos(angle) * deployRadius,
+                        height,
+                        Math.sin(angle) * deployRadius
+                    );
+                    
+                    target.userData = { 
+                        type: 'target', 
+                        id: i, 
+                        value: this.problem.targetValues[i],
+                        baseY: height
+                    };
+                    
+                    this.scene.add(target);
+                    this.targets.push(target);
+                    
+                    // 入场动画
+                    target.scale.set(0, 0, 0);
+                    this.animateObjectEntry(target, i * 60 + 300);
+                }
+            }
+            
+            createRealisticTargetModel(value) {
+                const group = new THREE.Group();
+                
+                // 根据价值确定目标类型和规模
+                let color, scale, complexity;
+                if (value < 40) {
+                    color = 0x228b22; // 绿色 - 低价值
+                    scale = 1.0;
+                    complexity = 'simple';
+                } else if (value < 70) {
+                    color = 0xdaa520; // 金色 - 中价值
+                    scale = 1.5;
+                    complexity = 'medium';
+                } else {
+                    color = 0xdc143c; // 红色 - 高价值
+                    scale = 2.0;
+                    complexity = 'complex';
+                }
+                
+                // 主建筑
+                const buildingGeometry = new THREE.BoxGeometry(4 * scale, 6 * scale, 4 * scale);
+                const buildingMaterial = new THREE.MeshPhongMaterial({ 
+                    color: color,
+                    shininess: 40
+                });
+                const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                building.position.y = 3 * scale;
+                building.castShadow = true;
+                building.receiveShadow = true;
+                group.add(building);
+                
+                // 天线或其他设施
+                if (complexity !== 'simple') {
+                    const antennaGeometry = new THREE.CylinderGeometry(0.2, 0.3, 4 * scale, 6);
+                    const antennaMaterial = new THREE.MeshPhongMaterial({ color: 0x808080 });
+                    const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+                    antenna.position.y = 6 * scale + 2 * scale;
+                    antenna.castShadow = true;
+                    group.add(antenna);
+                }
+                
+                // 高价值目标的额外设施
+                if (complexity === 'complex') {
+                    for (let i = 0; i < 3; i++) {
+                        const angle = (i / 3) * Math.PI * 2;
+                        const subGeometry = new THREE.BoxGeometry(2, 3, 2);
+                        const subMaterial = new THREE.MeshPhongMaterial({ color: 0x696969 });
+                        const subBuilding = new THREE.Mesh(subGeometry, subMaterial);
+                        subBuilding.position.set(
+                            Math.cos(angle) * 4,
+                            1.5,
+                            Math.sin(angle) * 4
+                        );
+                        subBuilding.castShadow = true;
+                        subBuilding.receiveShadow = true;
+                        group.add(subBuilding);
+                    }
+                }
+                
+                return group;
+            }
+            
+            animateObjectEntry(object, delay) {
+                setTimeout(() => {
+                    const startTime = Date.now();
+                    const duration = 600;
+                    
+                    const animate = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        
+                        object.scale.set(easeOut, easeOut, easeOut);
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        }
+                    };
+                    
+                    animate();
+                }, delay);
+            }
+            
+            solveProblem() {
+                if (!this.problem) return;
+                
+                const startTime = performance.now();
+                const algorithm = document.getElementById('algorithmSelect').value;
+                
+                // 进度回调
+                const onProgress = (percent) => {
+                    this.updateProgress(Math.min(percent, 95));
+                };
+                
+                this.updateProgress(5);
+                
+                // 延迟执行以显示进度
+                setTimeout(() => {
+                    let result;
+                    if (algorithm === 'genetic') {
+                        result = WTAAlgorithms.geneticAlgorithm(this.problem, onProgress);
+                    } else {
+                        result = WTAAlgorithms.simulatedAnnealing(this.problem, onProgress);
+                    }
+                    
+                    const endTime = performance.now();
+                    
+                    this.solution = result;
+                    this.updateProgress(100);
+                    this.visualizeAssignments();
+                    this.updateStats(endTime - startTime, result.iterations);
+                    
+                    setTimeout(() => this.updateProgress(0), 2000);
+                }, 100);
+            }
+            
+            visualizeAssignments() {
+                // 清除之前的连线
+                this.assignmentLines.forEach(line => this.scene.remove(line));
+                this.assignmentLines = [];
+                
+                if (!this.solution) return;
+                
+                for (let w = 0; w < this.solution.solution.length; w++) {
+                    const targetId = this.solution.solution[w];
+                    if (targetId >= 0 && targetId < this.targets.length) {
+                        const weapon = this.weapons[w];
+                        const target = this.targets[targetId];
+                        
+                        if (weapon && target) {
+                            const line = this.createTrajectoryLine(weapon.position, target.position);
+                            this.assignmentLines.push(line);
+                        }
+                    }
+                }
+            }
+            
+            createTrajectoryLine(start, end) {
+                const points = [];
+                const distance = start.distanceTo(end);
+                const steps = Math.max(10, Math.floor(distance / 5));
+                
+                // 创建抛物线轨迹
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const point = new THREE.Vector3().lerpVectors(start, end, t);
+                    // 添加抛物线高度
+                    point.y += Math.sin(t * Math.PI) * distance * 0.2;
+                    points.push(point);
+                }
+                
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({
+                    color: 0xdaa520,
+                    linewidth: 3,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const line = new THREE.Line(geometry, material);
+                this.scene.add(line);
+                return line;
+            }
+            
+            toggleAnimation() {
+                this.isAnimating = !this.isAnimating;
+                
+                if (this.isAnimating) {
+                    this.startBattleAnimation();
+                    document.getElementById('animateBtn').textContent = '⏸️ 停止演示';
+                } else {
+                    this.stopBattleAnimation();
+                    document.getElementById('animateBtn').textContent = '▶️ 作战演示';
+                }
+            }
+            
+            startBattleAnimation() {
+                if (!this.solution) return;
+                
+                for (let w = 0; w < this.solution.solution.length; w++) {
+                    const targetId = this.solution.solution[w];
+                    if (targetId >= 0 && targetId < this.targets.length) {
+                        setTimeout(() => {
+                            if (this.isAnimating) {
+                                this.launchMissile(this.weapons[w], this.targets[targetId]);
+                            }
+                        }, w * 500);
+                    }
+                }
+            }
+            
+            stopBattleAnimation() {
+                this.missiles.forEach(missile => this.scene.remove(missile));
+                this.missiles = [];
+            }
+            
+            launchMissile(weapon, target) {
+                const missile = new THREE.Group();
+                
+                // 导弹主体
+                const bodyGeometry = new THREE.CylinderGeometry(0.2, 0.3, 2, 8);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xc0c0c0,
+                    shininess: 100
+                });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                missile.add(body);
+                
+                // 尾焰
+                const flameGeometry = new THREE.ConeGeometry(0.3, 1, 6);
+                const flameMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xff4500,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const flame = new THREE.Mesh(flameGeometry, flameMaterial);
+                flame.position.y = -1.5;
+                missile.add(flame);
+                
+                missile.position.copy(weapon.position);
+                missile.position.y += 5;
+                
+                this.scene.add(missile);
+                this.missiles.push(missile);
+                
+                // 动画
+                const startPos = missile.position.clone();
+                const endPos = target.position.clone();
+                const duration = 3000;
+                const startTime = Date.now();
+                
+                const animateMissile = () => {
+                    if (!this.isAnimating) {
+                        this.scene.remove(missile);
+                        return;
+                    }
+                    
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // 抛物线轨迹
+                    const currentPos = new THREE.Vector3().lerpVectors(startPos, endPos, progress);
+                    currentPos.y += Math.sin(progress * Math.PI) * 20;
+                    
+                    missile.position.copy(currentPos);
+                    missile.lookAt(endPos);
+                    
+                    // 尾焰效果
+                    flame.material.opacity = 0.8 + Math.sin(elapsed * 0.02) * 0.2;
+                    
+                    if (progress >= 1) {
+                        this.scene.remove(missile);
+                        this.missiles = this.missiles.filter(m => m !== missile);
+                        this.createExplosionEffect(target);
+                    } else {
+                        requestAnimationFrame(animateMissile);
+                    }
+                };
+                
+                animateMissile();
+            }
+            
+            createExplosionEffect(target) {
+                // 爆炸效果
+                const explosionGroup = new THREE.Group();
+                explosionGroup.position.copy(target.position);
+                
+                // 火球
+                const fireballGeometry = new THREE.SphereGeometry(5, 16, 12);
+                const fireballMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xff4500,
+                    transparent: true,
+                    opacity: 1
+                });
+                const fireball = new THREE.Mesh(fireballGeometry, fireballMaterial);
+                explosionGroup.add(fireball);
+                
+                // 烟雾
+                const smokeGeometry = new THREE.SphereGeometry(8, 12, 8);
+                const smokeMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x333333,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial);
+                explosionGroup.add(smoke);
+                
+                this.scene.add(explosionGroup);
+                
+                // 爆炸动画
+                const startTime = Date.now();
+                const duration = 2000;
+                
+                const animateExplosion = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = elapsed / duration;
+                    
+                    if (progress >= 1) {
+                        this.scene.remove(explosionGroup);
+                        return;
+                    }
+                    
+                    // 火球扩散
+                    const fireScale = 1 + progress * 3;
+                    fireball.scale.set(fireScale, fireScale, fireScale);
+                    fireball.material.opacity = 1 - progress;
+                    
+                    // 烟雾上升
+                    const smokeScale = 1 + progress * 2;
+                    smoke.scale.set(smokeScale, smokeScale, smokeScale);
+                    smoke.position.y = progress * 15;
+                    smoke.material.opacity = 0.6 * (1 - progress);
+                    
+                    // 目标闪烁
+                    target.visible = Math.floor(elapsed / 100) % 2 === 0;
+                    
+                    requestAnimationFrame(animateExplosion);
+                };
+                
+                animateExplosion();
+                
+                // 恢复目标可见性
+                setTimeout(() => {
+                    target.visible = true;
+                }, duration);
+            }
+            
+            resetCamera() {
+                this.cameraController.radius = 80;
+                this.cameraController.theta = 0;
+                this.cameraController.phi = Math.PI / 4;
+                this.cameraController.autoRotate = true;
+                this.updateCameraPosition();
+            }
+            
+            checkHover() {
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const intersects = this.raycaster.intersectObjects([...this.weapons, ...this.targets], true);
+                
+                if (intersects.length > 0) {
+                    let object = intersects[0].object;
+                    while (object.parent && !object.userData.type) {
+                        object = object.parent;
+                    }
+                    
+                    if (object.userData.type && object !== this.hoveredObject) {
+                        this.hoveredObject = object;
+                        this.showInfoPanel(object);
+                    }
+                } else {
+                    if (this.hoveredObject) {
+                        this.hoveredObject = null;
+                        this.hideInfoPanel();
+                    }
+                }
+            }
+            
+            showInfoPanel(object) {
+                const infoTitle = document.getElementById('infoTitle');
+                const infoContent = document.getElementById('infoContent');
+                
+                if (object.userData.type === 'weapon') {
+                    const assignedTarget = this.solution ? this.solution.solution[object.userData.id] : -1;
+                    const targetInfo = assignedTarget >= 0 ? 
+                        `目标 #${assignedTarget + 1}` : '未分配';
+                    
+                    const killProb = assignedTarget >= 0 ? 
+                        (this.problem.killProb[object.userData.id][assignedTarget] * 100).toFixed(1) : 0;
+                    
+                    infoTitle.textContent = `武器系统 #${object.userData.id + 1}`;
+                    infoContent.innerHTML = `
+                        <p><strong>类型:</strong> 地对空导弹系统</p>
+                        <p><strong>分配目标:</strong> ${targetInfo}</p>
+                        ${assignedTarget >= 0 ? `<p><strong>击毁概率:</strong> ${killProb}%</p>` : ''}
+                        <p><strong>状态:</strong> ${assignedTarget >= 0 ? '🔴 已锁定' : '🟡 待命'}</p>
+                        <p><strong>装备:</strong> 1枚导弹</p>
+                    `;
+                } else if (object.userData.type === 'target') {
+                    const attackingWeapons = [];
+                    if (this.solution) {
+                        for (let w = 0; w < this.solution.solution.length; w++) {
+                            if (this.solution.solution[w] === object.userData.id) {
+                                attackingWeapons.push(w + 1);
+                            }
+                        }
+                    }
+                    
+                    const status = attackingWeapons.length > 0 ? 
+                        `🎯 被武器 #${attackingWeapons.join(', #')} 锁定` : 
+                        '🛡️ 未被锁定';
+                    
+                    const threatLevel = object.userData.value < 40 ? '低价值' : 
+                                      object.userData.value < 70 ? '中价值' : '高价值';
+                    
+                    const targetType = object.userData.value < 40 ? '后勤设施' : 
+                                      object.userData.value < 70 ? '军事基地' : '指挥中心';
+                    
+                    infoTitle.textContent = `目标 #${object.userData.id + 1}`;
+                    infoContent.innerHTML = `
+                        <p><strong>战略价值:</strong> ${object.userData.value.toFixed(1)}</p>
+                        <p><strong>价值等级:</strong> ${threatLevel}</p>
+                        <p><strong>目标类型:</strong> ${targetType}</p>
+                        <p><strong>锁定状态:</strong> ${status}</p>
+                    `;
+                }
+                
+                document.getElementById('infoPanel').classList.add('show');
+                
+                // 自动隐藏
+                setTimeout(() => {
+                    if (this.hoveredObject === object) {
+                        this.hideInfoPanel();
+                    }
+                }, 3000);
+            }
+            
+            hideInfoPanel() {
+                document.getElementById('infoPanel').classList.remove('show');
+            }
+            
+            updateProgress(percent) {
+                document.getElementById('progressFill').style.width = percent + '%';
+            }
+            
+            updateStats(computationTime = 0, iterations = 0) {
+                if (this.problem && this.solution) {
+                    const fitness = this.solution.fitness;
+                    const totalValue = this.problem.targetValues.reduce((sum, val) => sum + val, 0);
+                    const assignmentRate = (this.solution.solution.filter(s => s >= 0).length / this.problem.numWeapons) * 100;
+                    
+                    const targetsCovered = new Set();
+                    for (let w = 0; w < this.solution.solution.length; w++) {
+                        const target = this.solution.solution[w];
+                        if (target >= 0) {
+                            targetsCovered.add(target);
+                        }
+                    }
+                    
+                    document.getElementById('totalFitness').textContent = fitness.toFixed(2);
+                    document.getElementById('totalValue').textContent = totalValue.toFixed(2);
+                    document.getElementById('assignmentRate').textContent = assignmentRate.toFixed(0) + '%';
+                    document.getElementById('computationTime').textContent = computationTime.toFixed(0) + 'ms';
+                    document.getElementById('iterations').textContent = iterations;
+                    document.getElementById('targetCoverage').textContent = `${targetsCovered.size}/${this.problem.numTargets}`;
+                } else {
+                    document.getElementById('totalFitness').textContent = '0.00';
+                    document.getElementById('totalValue').textContent = '0.00';
+                    document.getElementById('assignmentRate').textContent = '0%';
+                    document.getElementById('computationTime').textContent = '0ms';
+                    document.getElementById('iterations').textContent = '0';
+                    document.getElementById('targetCoverage').textContent = '0/0';
+                }
+            }
+            
+            clearObjects() {
+                this.weapons.forEach(weapon => this.scene.remove(weapon));
+                this.targets.forEach(target => this.scene.remove(target));
+                this.assignmentLines.forEach(line => this.scene.remove(line));
+                this.missiles.forEach(missile => this.scene.remove(missile));
+                
+                this.weapons = [];
+                this.targets = [];
+                this.assignmentLines = [];
+                this.missiles = [];
+                this.solution = null;
+            }
+            
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+            
+            animate() {
+                const time = Date.now() * 0.001;
+                
+                // 自动旋转相机
+                if (this.cameraController.autoRotate && !this.cameraController.isDragging) {
+                    this.cameraController.theta += 0.001;
+                    this.updateCameraPosition();
+                }
+                
+                // 目标轻微摆动
+                this.targets.forEach((target, index) => {
+                    if (target.userData.baseY !== undefined) {
+                        const floatOffset = Math.sin(time * 0.5 + index * 0.3) * 0.5;
+                        target.position.y = target.userData.baseY + floatOffset;
+                        target.rotation.y += 0.002;
+                    }
+                });
+                
+                // 武器雷达旋转
+                this.weapons.forEach((weapon, index) => {
+                    if (weapon.children.length > 5) {
+                        const radar = weapon.children[5];
+                        radar.rotation.y += 0.02;
+                    }
+                });
+                
+                // 轨迹线闪烁
+                this.assignmentLines.forEach((line, index) => {
+                    if (line.material) {
+                        line.material.opacity = 0.6 + Math.sin(time * 2 + index) * 0.2;
+                    }
+                });
+            }
+            
+            updatePerformanceStats() {
+                const now = performance.now();
+                const renderStart = now;
+                
+                this.stats.frames++;
+                
+                if (now >= this.stats.lastTime + 1000) {
+                    this.stats.fps = Math.round((this.stats.frames * 1000) / (now - this.stats.lastTime));
+                    this.stats.frames = 0;
+                    this.stats.lastTime = now;
+                    
+                    document.getElementById('fpsCounter').textContent = this.stats.fps;
+                    document.getElementById('objectCount').textContent = this.scene.children.length;
+                    document.getElementById('renderTime').textContent = this.stats.renderTime.toFixed(1) + 'ms';
+                }
+                
+                // 计算渲染时间
+                requestAnimationFrame(() => {
+                    this.stats.renderTime = performance.now() - renderStart;
+                });
+            }
+            
+            startRenderLoop() {
+                const render = () => {
+                    this.animate();
+                    this.updatePerformanceStats();
+                    this.renderer.render(this.scene, this.camera);
+                    requestAnimationFrame(render);
+                };
+                render();
+            }
+        }
+
+        // 启动军事仿真系统
+        window.addEventListener('DOMContentLoaded', () => {
+            try {
+                new MilitaryWTAVisualizer();
+                console.log('🎖️ WTA军事仿真系统启动成功');
+            } catch (error) {
+                console.error('❌ 系统启动失败:', error);
+                alert('军事仿真系统启动失败，请检查浏览器兼容性');
+            }
+        });
+
+        // 性能监控
+        if ('performance' in window) {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    const perfData = performance.getEntriesByType('navigation')[0];
+                    console.log(`📊 系统加载时间: ${perfData.loadEventEnd - perfData.fetchStart}ms`);
+                }, 0);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿  wta.cpp
+F:\cpp\WTA\WTA\wta.cpp(214,64): warning C4267: “参数”: 从“size_t”转换到“_Ty”，可能丢失数据
+F:\cpp\WTA\WTA\wta.cpp(214,64): warning C4267:         with
+F:\cpp\WTA\WTA\wta.cpp(214,64): warning C4267:         [
+F:\cpp\WTA\WTA\wta.cpp(214,64): warning C4267:             _Ty=int
+F:\cpp\WTA\WTA\wta.cpp(214,64): warning C4267:         ]
+F:\cpp\WTA\WTA\wta.cpp(229,54): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+  WTA.vcxproj -> F:\cpp\WTA\x64\Debug\WTA.exe

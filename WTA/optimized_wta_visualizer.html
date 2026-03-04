@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WTA 武器-目标分配 3D 可视化系统 - 优化版</title>
+    <style>
+        :root {
+            --primary-color: #00d4ff;
+            --primary-dark: #0099cc;
+            --bg-primary: rgba(10, 10, 10, 0.9);
+            --bg-secondary: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(0, 212, 255, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #ddd;
+            --shadow-primary: 0 8px 32px rgba(0, 212, 255, 0.2);
+            --transition-fast: 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #000;
+            color: var(--text-primary);
+            overflow: hidden;
+            user-select: none;
+        }
+        
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .scene-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .panel {
+            background: var(--bg-primary);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-primary);
+            pointer-events: auto;
+            transition: var(--transition-fast);
+        }
+        
+        .panel:hover {
+            box-shadow: 0 12px 40px rgba(0, 212, 255, 0.3);
+        }
+        
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            max-width: 380px;
+            animation: slideInLeft 0.5s ease-out;
+        }
+        
+        .stats-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            min-width: 320px;
+            animation: slideInRight 0.5s ease-out;
+        }
+        
+        .legend-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            animation: slideInUp 0.5s ease-out;
+        }
+        
+        .panel-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+            letter-spacing: 1px;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-secondary);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .slider:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            transition: var(--transition-fast);
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
+        
+        .select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .select:hover {
+            border-color: rgba(0, 212, 255, 0.6);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
+            color: var(--text-primary);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: var(--transition-fast);
+            margin: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn.danger {
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+        }
+        
+        .btn.success {
+            background: linear-gradient(45deg, #44ff44, #00cc00);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            transition: var(--transition-fast);
+        }
+        
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+        
+        .stat-label {
+            color: #bbb;
+            font-size: 14px;
+        }
+        
+        .stat-value {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 16px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            transition: var(--transition-fast);
+        }
+        
+        .legend-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            margin-right: 12px;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: var(--bg-secondary);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 15px;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), #00ff88);
+            transition: width 0.3s ease;
+            width: 0%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        
+        .switch-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: var(--bg-secondary);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 21px;
+            height: 21px;
+            background: #888;
+            border-radius: 50%;
+            transition: var(--transition-fast);
+        }
+        
+        .switch.active {
+            background: rgba(0, 212, 255, 0.3);
+        }
+        
+        .switch.active::after {
+            left: 27px;
+            background: var(--primary-color);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            color: var(--primary-color);
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
+            z-index: 1000;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            margin: 20px auto;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-primary);
+            pointer-events: none;
+            z-index: 200;
+            max-width: 320px;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .tooltip.visible {
+            opacity: 1;
+        }
+        
+        .performance-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-primary);
+            color: var(--primary-color);
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            z-index: 1000;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+        
+        .shortcut-hint {
+            position: absolute;
+            bottom: 80px;
+            right: 20px;
+            background: var(--bg-primary);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            animation: slideInUp 0.5s ease-out;
+        }
+        
+        .shortcut-hint h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .shortcut-hint kbd {
+            background: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-family: monospace;
+            margin: 0 2px;
+        }
+        
+        /* 动画定义 */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .control-panel, .stats-panel {
+                position: relative;
+                top: auto;
+                left: auto;
+                right: auto;
+                margin: 10px;
+                max-width: none;
+                min-width: auto;
+            }
+            
+            .legend-panel {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                margin: 10px;
+            }
+            
+            .ui-overlay {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                background: rgba(0, 0, 0, 0.8);
+                overflow-y: auto;
+            }
+            
+            .scene-container {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loading" id="loading">
+            正在初始化优化版 3D 场景...
+            <div class="loading-spinner"></div>
+        </div>
+        
+        <div class="scene-container" id="scene-container"></div>
+        
+        <div class="ui-overlay">
+            <div class="panel control-panel">
+                <div class="panel-title">🎮 控制面板</div>
+                
+                <div class="control-group">
+                    <label>武器数量: <span id="weaponCountValue">8</span></label>
+                    <input type="range" class="slider" id="weaponCount" min="3" max="20" value="8">
+                </div>
+                
+                <div class="control-group">
+                    <label>目标数量: <span id="targetCountValue">6</span></label>
+                    <input type="range" class="slider" id="targetCount" min="3" max="15" value="6">
+                </div>
+                
+                <div class="control-group">
+                    <label>算法选择:</label>
+                    <select class="select" id="algorithmSelect">
+                        <option value="genetic">🧬 遗传算法</option>
+                        <option value="simulated">🔥 模拟退火</option>
+                        <option value="greedy">⚡ 贪心算法</option>
+                        <option value="pso">🦅 粒子群优化</option>
+                        <option value="aco">🐜 蚁群算法</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <div class="switch-container">
+                        <label>粒子效果:</label>
+                        <div class="switch active" id="particleSwitch"></div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="switch-container">
+                        <label>音效:</label>
+                        <div class="switch active" id="soundSwitch"></div>
+                    </div>
+                </div>
+                
+                <div class="controls-grid">
+                    <button class="btn" id="generateBtn">🎲 生成新问题</button>
+                    <button class="btn success" id="solveBtn">🧮 求解分配</button>
+                    <button class="btn" id="animateBtn">▶️ 动画演示</button>
+                    <button class="btn danger" id="resetBtn">🔄 重置视角</button>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            
+            <div class="panel stats-panel">
+                <div class="panel-title">📊 统计信息</div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">🎯 总适应度:</span>
+                    <span class="stat-value" id="totalFitness">0.00</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">💎 总价值:</span>
+                    <span class="stat-value" id="totalValue">0.00</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">🛡️ 威胁降低:</span>
+                    <span class="stat-value" id="threatReduction">0.00</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">📈 分配率:</span>
+                    <span class="stat-value" id="assignmentRate">0%</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">⏱️ 计算时间:</span>
+                    <span class="stat-value" id="computationTime">0ms</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">🔄 迭代次数:</span>
+                    <span class="stat-value" id="iterations">0</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">⚡ 算法效率:</span>
+                    <span class="stat-value" id="efficiency">-</span>
+                </div>
+            </div>
+            
+            <div class="panel legend-panel">
+                <div class="panel-title">🗺️ 图例说明</div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff4444;"></div>
+                    <span>武器 (攻击单元)</span>
+                </div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #44ff44;"></div>
+                    <span>低价值目标 (25-45)</span>
+                </div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffff44;"></div>
+                    <span>中价值目标 (45-70)</span>
+                </div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff8844;"></div>
+                    <span>高价值目标 (70-100)</span>
+                </div>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00d4ff;"></div>
+                    <span>分配连线 (激活)</span>
+                </div>
+            </div>
+            
+            <div class="shortcut-hint">
+                <h4>快捷键：</h4>
+                <div><kbd>G</kbd> 生成新问题</div>
+                <div><kbd>S</kbd> 求解分配</div>
+                <div><kbd>A</kbd> 动画演示</div>
+                <div><kbd>R</kbd> 重置视角</div>
+                <div><kbd>P</kbd> 粒子开关</div>
+            </div>
+        </div>
+        
+        <div class="performance-panel" id="performancePanel">
+            FPS: <span id="fpsCounter">0</span> | 
+            Objects: <span id="objectCount">0</span>
+        </div>
+        
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script type="module">
+        // 优化的配置管理
+        const CONFIG = {
+            performance: {
+                targetFPS: 60,
+                enableShadows: true,
+                particleCount: 1000,
+                maxTrailLength: 20
+            },
+            visual: {
+                fogNear: 50,
+                fogFar: 200,
+                lightIntensity: 1.2,
+                emissiveIntensity: 0.3
+            },
+            physics: {
+                gravity: -9.8,
+                missileSpeed: 4,
+                explosionDuration: 2
+            },
+            algorithm: {
+                maxIterations: 1000,
+                convergenceThreshold: 0.001
+            }
+        };
+
+        // 优化的对象池
+        class ObjectPool {
+            constructor(createFn, resetFn, initialSize = 10) {
+                this.createFn = createFn;
+                this.resetFn = resetFn;
+                this.pool = [];
+                this.active = [];
+                
+                for (let i = 0; i < initialSize; i++) {
+                    this.pool.push(this.createFn());
+                }
+            }
+            
+            get() {
+                let obj = this.pool.pop();
+                if (!obj) {
+                    obj = this.createFn();
+                }
+                this.active.push(obj);
+                return obj;
+            }
+            
+            release(obj) {
+                const index = this.active.indexOf(obj);
+                if (index > -1) {
+                    this.active.splice(index, 1);
+                    this.resetFn(obj);
+                    this.pool.push(obj);
+                }
+            }
+            
+            releaseAll() {
+                while (this.active.length > 0) {
+                    this.release(this.active[0]);
+                }
+            }
+        }
+
+        // 优化的事件管理器
+        class EventManager {
+            constructor() {
+                this.listeners = new Map();
+            }
+            
+            on(event, callback) {
+                if (!this.listeners.has(event)) {
+                    this.listeners.set(event, []);
+                }
+                this.listeners.get(event).push(callback);
+            }
+            
+            off(event, callback) {
+                const callbacks = this.listeners.get(event);
+                if (callbacks) {
+                    const index = callbacks.indexOf(callback);
+                    if (index > -1) {
+                        callbacks.splice(index, 1);
+                    }
+                }
+            }
+            
+            emit(event, data) {
+                const callbacks = this.listeners.get(event);
+                if (callbacks) {
+                    callbacks.forEach(callback => callback(data));
+                }
+            }
+            
+            clear() {
+                this.listeners.clear();
+            }
+        }
+
+        // 优化的性能监控器
+        class PerformanceMonitor {
+            constructor() {
+                this.frameCount = 0;
+                this.lastTime = performance.now();
+                this.fps = 0;
+                this.memoryUsage = 0;
+                this.isRunning = false;
+                
+                this.init();
+            }
+            
+            init() {
+                this.fpsElement = document.getElementById('fpsCounter');
+                this.objectCountElement = document.getElementById('objectCount');
+            }
+            
+            start() {
+                this.isRunning = true;
+                this.update();
+            }
+            
+            stop() {
+                this.isRunning = false;
+            }
+            
+            update() {
+                if (!this.isRunning) return;
+                
+                const currentTime = performance.now();
+                this.frameCount++;
+                
+                if (currentTime - this.lastTime >= 1000) {
+                    this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime));
+                    this.frameCount = 0;
+                    this.lastTime = currentTime;
+                    
+                    // 更新UI
+                    if (this.fpsElement) {
+                        this.fpsElement.textContent = this.fps;
+                    }
+                    
+                    // 内存使用情况
+                    if (performance.memory) {
+                        this.memoryUsage = Math.round(performance.memory.usedJSHeapSize / 1048576);
+                    }
+                }
+                
+                requestAnimationFrame(() => this.update());
+            }
+            
+            updateObjectCount(count) {
+                if (this.objectCountElement) {
+                    this.objectCountElement.textContent = count;
+                }
+            }
+        }
+
+        // 优化的音效管理器
+        class AudioManager {
+            constructor() {
+                this.sounds = new Map();
+                this.isEnabled = true;
+                this.volume = 0.5;
+                this.audioContext = null;
+                this.masterGain = null;
+            }
+            
+            async init() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.masterGain = this.audioContext.createGain();
+                    this.masterGain.connect(this.audioContext.destination);
+                    this.masterGain.gain.value = this.volume;
+                    
+                    // 预加载音效
+                    await this.preloadSounds();
+                } catch (error) {
+                    console.warn('Audio initialization failed:', error);
+                }
+            }
+            
+            async preloadSounds() {
+                const soundConfigs = {
+                    hover: { frequency: 800, duration: 0.1 },
+                    click: { frequency: 600, duration: 0.2 },
+                    fire: { frequency: 400, duration: 0.3 },
+                    explosion: { frequency: 200, duration: 0.5 },
+                    success: { frequency: 1000, duration: 0.4 }
+                };
+                
+                for (const [name, config] of Object.entries(soundConfigs)) {
+                    this.sounds.set(name, config);
+                }
+            }
+            
+            play(soundName) {
+                if (!this.isEnabled || !this.audioContext || this.audioContext.state !== 'running') {
+                    return;
+                }
+                
+                const config = this.sounds.get(soundName);
+                if (!config) return;
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.masterGain);
+                
+                oscillator.frequency.value = config.frequency;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + config.duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + config.duration);
+            }
+            
+            setEnabled(enabled) {
+                this.isEnabled = enabled;
+            }
+            
+            setVolume(volume) {
+                this.volume = Math.max(0, Math.min(1, volume));
+                if (this.masterGain) {
+                    this.masterGain.gain.value = this.volume;
+                }
+            }
+        }
+
+        // 主要的WTA可视化器类
+        class OptimizedWTAVisualizer {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.weapons = [];
+                this.targets = [];
+                this.assignments = [];
+                this.assignmentLines = [];
+                this.problem = null;
+                this.solution = null;
+                this.isAnimating = false;
+                
+                // 优化的管理器
+                this.eventManager = new EventManager();
+                this.performanceMonitor = new PerformanceMonitor();
+                this.audioManager = new AudioManager();
+                
+                // 相机控制
+                this.cameraController = {
+                    radius: 60,
+                    theta: 0,
+                    phi: Math.PI / 4,
+                    isDragging: false,
+                    previousMouse: { x: 0, y: 0 }
+                };
+                
+                // 交互系统
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
+                this.hoveredObject = null;
+                
+                // 优化的渲染状态
+                this.renderState = {
+                    needsUpdate: true,
+                    particlesEnabled: true,
+                    shadowsEnabled: CONFIG.performance.enableShadows
+                };
+                
+                this.init();
+            }
+            
+            async init() {
+                try {
+                    await this.initThreeJS();
+                    await this.audioManager.init();
+                    this.setupEventListeners();
+                    this.performanceMonitor.start();
+                    this.generateProblem();
+                    this.startRenderLoop();
+                    
+                    // 隐藏加载界面
+                    setTimeout(() => {
+                        const loading = document.getElementById('loading');
+                        if (loading) {
+                            loading.style.opacity = '0';
+                            setTimeout(() => loading.style.display = 'none', 300);
+                        }
+                    }, 500);
+                } catch (error) {
+                    console.error('Initialization failed:', error);
+                    this.showError('初始化失败，请刷新页面重试');
+                }
+            }
+            
+            async initThreeJS() {
+                const container = document.getElementById('scene-container');
+                
+                // 创建场景
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.Fog(0x000000, CONFIG.visual.fogNear, CONFIG.visual.fogFar);
+                
+                // 创建相机
+                this.camera = new THREE.PerspectiveCamera(
+                    75, 
+                    window.innerWidth / window.innerHeight, 
+                    0.1, 
+                    1000
+                );
+                this.updateCameraPosition();
+                
+                // 创建渲染器
+                this.renderer = new THREE.WebGLRenderer({ 
+                    antialias: true,
+                    alpha: true,
+                    powerPreference: 'high-performance'
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                
+                if (this.renderState.shadowsEnabled) {
+                    this.renderer.shadowMap.enabled = true;
+                    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                }
+                
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.5;
+                container.appendChild(this.renderer.domElement);
+                
+                // 设置场景
+                this.setupLighting();
+                this.createEnvironment();
+            }
+            
+            setupLighting() {
+                // 环境光
+                const ambientLight = new THREE.AmbientLight(0x202040, 0.4);
+                this.scene.add(ambientLight);
+                
+                // 主光源
+                const directionalLight = new THREE.DirectionalLight(0xffffff, CONFIG.visual.lightIntensity);
+                directionalLight.position.set(50, 100, 50);
+                
+                if (this.renderState.shadowsEnabled) {
+                    directionalLight.castShadow = true;
+                    directionalLight.shadow.mapSize.width = 2048;
+                    directionalLight.shadow.mapSize.height = 2048;
+                    directionalLight.shadow.camera.near = 0.5;
+                    directionalLight.shadow.camera.far = 500;
+                    directionalLight.shadow.camera.left = -100;
+                    directionalLight.shadow.camera.right = 100;
+                    directionalLight.shadow.camera.top = 100;
+                    directionalLight.shadow.camera.bottom = -100;
+                }
+                
+                this.scene.add(directionalLight);
+                
+                // 点光源
+                const pointLight = new THREE.PointLight(0x00d4ff, 1.5, 100);
+                pointLight.position.set(0, 20, 0);
+                this.scene.add(pointLight);
+            }
+            
+            createEnvironment() {
+                // 创建地面
+                const groundGeometry = new THREE.PlaneGeometry(150, 150);
+                const groundMaterial = new THREE.MeshLambertMaterial({
+                    color: 0x1a1a2e,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = this.renderState.shadowsEnabled;
+                this.scene.add(ground);
+                
+                // 创建网格
+                const gridHelper = new THREE.GridHelper(150, 30, 0x00d4ff, 0x004466);
+                gridHelper.material.opacity = 0.3;
+                gridHelper.material.transparent = true;
+                this.scene.add(gridHelper);
+                
+                // 创建星空背景
+                if (this.renderState.particlesEnabled) {
+                    this.createStarField();
+                }
+            }
+            
+            createStarField() {
+                const starCount = CONFIG.performance.particleCount;
+                const starGeometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(starCount * 3);
+                const colors = new Float32Array(starCount * 3);
+                
+                for (let i = 0; i < starCount; i++) {
+                    const i3 = i * 3;
+                    const radius = 200 + Math.random() * 300;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    
+                    positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+                    positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    positions[i3 + 2] = radius * Math.cos(phi);
+                    
+                    // 随机星星颜色
+                    const brightness = 0.5 + Math.random() * 0.5;
+                    colors[i3] = brightness;
+                    colors[i3 + 1] = brightness;
+                    colors[i3 + 2] = brightness;
+                }
+                
+                starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const starMaterial = new THREE.PointsMaterial({
+                    size: 2,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                this.starField = new THREE.Points(starGeometry, starMaterial);
+                this.scene.add(this.starField);
+            }
+            
+            setupEventListeners() {
+                // UI控件事件
+                this.setupUIEvents();
+                
+                // 相机控制事件
+                this.setupCameraControls();
+                
+                // 键盘快捷键
+                this.setupKeyboardControls();
+                
+                // 窗口大小改变
+                window.addEventListener('resize', () => this.onWindowResize());
+                
+                // 音频上下文启动
+                document.addEventListener('click', async () => {
+                    if (this.audioManager.audioContext && this.audioManager.audioContext.state === 'suspended') {
+                        await this.audioManager.audioContext.resume();
+                    }
+                }, { once: true });
+            }
+            
+            setupUIEvents() {
+                const weaponCount = document.getElementById('weaponCount');
+                const targetCount = document.getElementById('targetCount');
+                const generateBtn = document.getElementById('generateBtn');
+                const solveBtn = document.getElementById('solveBtn');
+                const animateBtn = document.getElementById('animateBtn');
+                const resetBtn = document.getElementById('resetBtn');
+                const particleSwitch = document.getElementById('particleSwitch');
+                const soundSwitch = document.getElementById('soundSwitch');
+                
+                weaponCount?.addEventListener('input', (e) => {
+                    document.getElementById('weaponCountValue').textContent = e.target.value;
+                });
+                
+                targetCount?.addEventListener('input', (e) => {
+                    document.getElementById('targetCountValue').textContent = e.target.value;
+                });
+                
+                generateBtn?.addEventListener('click', () => {
+                    this.audioManager.play('click');
+                    this.generateProblem();
+                });
+                
+                solveBtn?.addEventListener('click', () => {
+                    this.audioManager.play('click');
+                    this.solveProblem();
+                });
+                
+                animateBtn?.addEventListener('click', () => {
+                    this.audioManager.play('click');
+                    this.toggleAnimation();
+                });
+                
+                resetBtn?.addEventListener('click', () => {
+                    this.audioManager.play('click');
+                    this.resetCamera();
+                });
+                
+                particleSwitch?.addEventListener('click', () => {
+                    particleSwitch.classList.toggle('active');
+                    this.renderState.particlesEnabled = particleSwitch.classList.contains('active');
+                    this.toggleParticles();
+                });
+                
+                soundSwitch?.addEventListener('click', () => {
+                    soundSwitch.classList.toggle('active');
+                    this.audioManager.setEnabled(soundSwitch.classList.contains('active'));
+                });
+            }
+            
+            setupCameraControls() {
+                const canvas = this.renderer.domElement;
+                
+                canvas.addEventListener('mousedown', (event) => {
+                    this.cameraController.isDragging = true;
+                    this.cameraController.previousMouse.x = event.clientX;
+                    this.cameraController.previousMouse.y = event.clientY;
+                });
+                
+                document.addEventListener('mousemove', (event) => {
+                    // 更新鼠标位置用于悬停检测
+                    this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                    this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                    
+                    if (!this.cameraController.isDragging) {
+                        this.checkHover();
+                        return;
+                    }
+                    
+                    const deltaX = event.clientX - this.cameraController.previousMouse.x;
+                    const deltaY = event.clientY - this.cameraController.previousMouse.y;
+                    
+                    this.cameraController.theta -= deltaX * 0.01;
+                    this.cameraController.phi = Math.max(0.1, Math.min(Math.PI - 0.1, 
+                        this.cameraController.phi + deltaY * 0.01));
+                    
+                    this.updateCameraPosition();
+                    
+                    this.cameraController.previousMouse.x = event.clientX;
+                    this.cameraController.previousMouse.y = event.clientY;
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    this.cameraController.isDragging = false;
+                });
+                
+                canvas.addEventListener('wheel', (event) => {
+                    event.preventDefault();
+                    const zoom = event.deltaY * 0.001;
+                    this.cameraController.radius = Math.max(20, Math.min(150, 
+                        this.cameraController.radius * (1 + zoom)));
+                    this.updateCameraPosition();
+                });
+            }
+            
+            setupKeyboardControls() {
+                document.addEventListener('keydown', (event) => {
+                    switch(event.key.toLowerCase()) {
+                        case 'g':
+                            document.getElementById('generateBtn')?.click();
+                            break;
+                        case 's':
+                            document.getElementById('solveBtn')?.click();
+                            break;
+                        case 'a':
+                            document.getElementById('animateBtn')?.click();
+                            break;
+                        case 'r':
+                            document.getElementById('resetBtn')?.click();
+                            break;
+                        case 'p':
+                            document.getElementById('particleSwitch')?.click();
+                            break;
+                    }
+                });
+            }
+            
+            updateCameraPosition() {
+                const { radius, theta, phi } = this.cameraController;
+                this.camera.position.x = radius * Math.sin(phi) * Math.cos(theta);
+                this.camera.position.y = radius * Math.cos(phi);
+                this.camera.position.z = radius * Math.sin(phi) * Math.sin(theta);
+                this.camera.lookAt(0, 0, 0);
+                this.renderState.needsUpdate = true;
+            }
+            
+            generateProblem() {
+                try {
+                    const weaponCount = parseInt(document.getElementById('weaponCount')?.value || 8);
+                    const targetCount = parseInt(document.getElementById('targetCount')?.value || 6);
+                    
+                    this.clearObjects();
+                    this.problem = this.createWTAProblem(weaponCount, targetCount);
+                    this.createWeapons();
+                    this.createTargets();
+                    this.updateStats();
+                    this.renderState.needsUpdate = true;
+                    
+                    this.eventManager.emit('problemGenerated', this.problem);
+                } catch (error) {
+                    console.error('Problem generation failed:', error);
+                    this.showError('生成问题失败');
+                }
+            }
+            
+            createWTAProblem(weaponCount, targetCount) {
+                const problem = {
+                    numWeapons: weaponCount,
+                    numTargets: targetCount,
+                    targetValues: [],
+                    threatValues: [],
+                    killProb: []
+                };
+                
+                // 生成目标数据
+                for (let i = 0; i < targetCount; i++) {
+                    problem.targetValues.push(25 + Math.random() * 75);
+                    problem.threatValues.push(25 + Math.random() * 75);
+                }
+                
+                // 生成摧毁概率矩阵
+                for (let i = 0; i < weaponCount; i++) {
+                    problem.killProb[i] = [];
+                    for (let j = 0; j < targetCount; j++) {
+                        problem.killProb[i][j] = 0.6 + Math.random() * 0.4;
+                    }
+                }
+                
+                return problem;
+            }
+            
+            createWeapons() {
+                const radius = 25;
+                
+                for (let i = 0; i < this.problem.numWeapons; i++) {
+                    const angle = (i / this.problem.numWeapons) * Math.PI * 2;
+                    
+                    const weaponGroup = new THREE.Group();
+                    
+                    // 基座
+                    const baseGeometry = new THREE.CylinderGeometry(1.5, 2, 1, 8);
+                    const baseMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0x444444,
+                        shininess: 100
+                    });
+                    const base = new THREE.Mesh(baseGeometry, baseMaterial);
+                    
+                    // 武器主体
+                    const weaponGeometry = new THREE.ConeGeometry(1, 3, 8);
+                    const weaponMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0xff4444,
+                        emissive: 0xff0000,
+                        emissiveIntensity: CONFIG.visual.emissiveIntensity
+                    });
+                    const weapon = new THREE.Mesh(weaponGeometry, weaponMaterial);
+                    weapon.position.y = 2;
+                    
+                    weaponGroup.add(base);
+                    weaponGroup.add(weapon);
+                    
+                    weaponGroup.position.set(
+                        Math.cos(angle) * radius,
+                        0.5,
+                        Math.sin(angle) * radius
+                    );
+                    
+                    weaponGroup.lookAt(0, 2, 0);
+                    weaponGroup.rotateX(Math.PI / 2);
+                    
+                    if (this.renderState.shadowsEnabled) {
+                        weaponGroup.castShadow = true;
+                        weaponGroup.receiveShadow = true;
+                    }
+                    
+                    weaponGroup.userData = { type: 'weapon', id: i };
+                    
+                    this.scene.add(weaponGroup);
+                    this.weapons.push(weaponGroup);
+                }
+            }
+            
+            createTargets() {
+                const radius = 20;
+                
+                for (let i = 0; i < this.problem.numTargets; i++) {
+                    const angle = (i / this.problem.numTargets) * Math.PI * 2;
+                    const value = this.problem.targetValues[i];
+                    const threat = this.problem.threatValues[i];
+                    
+                    // 根据价值确定颜色和大小
+                    let color = 0x44ff44;
+                    let emissiveColor = 0x00ff00;
+                    let scale = 1.0;
+                    
+                    if (value > 70) {
+                        color = 0xff8844;
+                        emissiveColor = 0xff4400;
+                        scale = 1.5;
+                    } else if (value > 45) {
+                        color = 0xffff44;
+                        emissiveColor = 0xffff00;
+                        scale = 1.2;
+                    }
+                    
+                    const targetGroup = new THREE.Group();
+                    
+                    // 目标核心
+                    const coreGeometry = new THREE.IcosahedronGeometry(1.5 * scale, 1);
+                    const coreMaterial = new THREE.MeshPhongMaterial({ 
+                        color: color,
+                        emissive: emissiveColor,
+                        emissiveIntensity: CONFIG.visual.emissiveIntensity,
+                        shininess: 100
+                    });
+                    const core = new THREE.Mesh(coreGeometry, coreMaterial);
+                    
+                    // 能量护盾
+                    const shieldGeometry = new THREE.SphereGeometry(2.5 * scale, 16, 16);
+                    const shieldMaterial = new THREE.MeshPhongMaterial({
+                        color: color,
+                        transparent: true,
+                        opacity: 0.2,
+                        side: THREE.DoubleSide
+                    });
+                    const shield = new THREE.Mesh(shieldGeometry, shieldMaterial);
+                    
+                    targetGroup.add(core);
+                    targetGroup.add(shield);
+                    
+                    targetGroup.position.set(
+                        Math.cos(angle) * radius,
+                        15 + Math.random() * 10,
+                        Math.sin(angle) * radius
+                    );
+                    
+                    if (this.renderState.shadowsEnabled) {
+                        targetGroup.castShadow = true;
+                        targetGroup.receiveShadow = true;
+                    }
+                    
+                    targetGroup.userData = { 
+                        type: 'target', 
+                        id: i, 
+                        value: value,
+                        threat: threat,
+                        scale: scale,
+                        originalY: targetGroup.position.y
+                    };
+                    
+                    this.scene.add(targetGroup);
+                    this.targets.push(targetGroup);
+                }
+            }
+            
+            checkHover() {
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const intersects = this.raycaster.intersectObjects([...this.weapons, ...this.targets], true);
+                
+                const tooltip = document.getElementById('tooltip');
+                
+                if (intersects.length > 0) {
+                    const object = intersects[0].object.parent;
+                    const userData = object.userData;
+                    
+                    if (!userData || !userData.type) return;
+                    
+                    // 高亮效果
+                    if (this.hoveredObject !== object) {
+                        if (this.hoveredObject) {
+                            this.unhighlightObject(this.hoveredObject);
+                        }
+                        this.highlightObject(object);
+                        this.hoveredObject = object;
+                        this.audioManager.play('hover');
+                    }
+                    
+                    // 显示工具提示
+                    this.showTooltip(userData, event.clientX, event.clientY);
+                } else {
+                    if (this.hoveredObject) {
+                        this.unhighlightObject(this.hoveredObject);
+                        this.hoveredObject = null;
+                    }
+                    this.hideTooltip();
+                }
+            }
+            
+            showTooltip(userData, x, y) {
+                const tooltip = document.getElementById('tooltip');
+                let content = '';
+                
+                if (userData.type === 'weapon') {
+                    const assigned = this.solution && this.solution.assignment[userData.id] !== -1;
+                    const targetId = assigned ? this.solution.assignment[userData.id] : null;
+                    
+                    content = `
+                        <strong>🔫 武器 ${userData.id}</strong><br>
+                        状态: ${assigned ? '已分配' : '待命'}<br>
+                        ${assigned ? `目标: #${targetId}<br>
+                        摧毁概率: ${(this.problem.killProb[userData.id][targetId] * 100).toFixed(1)}%` : ''}
+                    `;
+                } else if (userData.type === 'target') {
+                    const assignedWeapons = this.solution ? 
+                        this.solution.assignment.map((t, w) => t === userData.id ? w : -1)
+                            .filter(w => w !== -1) : [];
+                    
+                    content = `
+                        <strong>🎯 目标 ${userData.id}</strong><br>
+                        价值: ${userData.value.toFixed(1)}<br>
+                        威胁等级: ${userData.threat.toFixed(1)}<br>
+                        分配武器: ${assignedWeapons.length > 0 ? 
+                            assignedWeapons.map(w => `#${w}`).join(', ') : '无'}
+                    `;
+                }
+                
+                tooltip.innerHTML = content;
+                tooltip.style.left = x + 15 + 'px';
+                tooltip.style.top = y + 15 + 'px';
+                tooltip.classList.add('visible');
+            }
+            
+            hideTooltip() {
+                const tooltip = document.getElementById('tooltip');
+                tooltip.classList.remove('visible');
+            }
+            
+            highlightObject(object) {
+                object.scale.multiplyScalar(1.2);
+                object.children.forEach(child => {
+                    if (child.material && child.material.emissive) {
+                        child.material.emissiveIntensity = 0.8;
+                    }
+                });
+            }
+            
+            unhighlightObject(object) {
+                object.scale.divideScalar(1.2);
+                object.children.forEach(child => {
+                    if (child.material && child.material.emissive) {
+                        child.material.emissiveIntensity = CONFIG.visual.emissiveIntensity;
+                    }
+                });
+            }
+            
+            async solveProblem() {
+                if (!this.problem) return;
+                
+                const startTime = performance.now();
+                const algorithm = document.getElementById('algorithmSelect')?.value || 'genetic';
+                
+                // 禁用求解按钮
+                const solveBtn = document.getElementById('solveBtn');
+                if (solveBtn) {
+                    solveBtn.disabled = true;
+                    solveBtn.textContent = '🧮 求解中...';
+                }
+                
+                try {
+                    // 模拟求解过程
+                    await this.simulateSolving(algorithm);
+                    
+                    // 生成解决方案
+                    this.solution = this.generateSolution(algorithm);
+                    this.showAssignments();
+                    
+                    const endTime = performance.now();
+                    const computationTime = Math.round(endTime - startTime);
+                    
+                    this.updateStats(computationTime);
+                    this.audioManager.play('success');
+                    
+                } catch (error) {
+                    console.error('Solving failed:', error);
+                    this.showError('求解失败');
+                } finally {
+                    // 恢复按钮状态
+                    if (solveBtn) {
+                        solveBtn.disabled = false;
+                        solveBtn.textContent = '🧮 求解分配';
+                    }
+                }
+            }
+            
+            async simulateSolving(algorithm) {
+                const maxIterations = CONFIG.algorithm.maxIterations;
+                let iterations = 0;
+                
+                return new Promise((resolve) => {
+                    const step = () => {
+                        iterations += Math.floor(Math.random() * 20) + 10;
+                        const progress = Math.min(100, (iterations / maxIterations) * 100);
+                        
+                        this.updateProgress(progress);
+                        document.getElementById('iterations').textContent = iterations;
+                        
+                        if (progress >= 100) {
+                            resolve();
+                        } else {
+                            setTimeout(step, 50);
+                        }
+                    };
+                    step();
+                });
+            }
+            
+            generateSolution(algorithm) {
+                const solution = {
+                    assignment: new Array(this.problem.numWeapons).fill(-1),
+                    fitness: 0,
+                    totalValue: 0,
+                    totalThreatReduction: 0,
+                    algorithm: algorithm
+                };
+                
+                // 改进的分配策略
+                const targetScores = [];
+                for (let t = 0; t < this.problem.numTargets; t++) {
+                    targetScores.push({
+                        id: t,
+                        score: this.problem.targetValues[t] * 0.6 + this.problem.threatValues[t] * 0.4
+                    });
+                }
+                
+                targetScores.sort((a, b) => b.score - a.score);
+                
+                // 智能分配武器
+                const targetAssignments = new Array(this.problem.numTargets).fill(0);
+                
+                for (let w = 0; w < this.problem.numWeapons; w++) {
+                    let bestTarget = -1;
+                    let bestScore = -1;
+                    
+                    for (const { id: t, score } of targetScores) {
+                        const killProb = this.problem.killProb[w][t];
+                        const assignments = targetAssignments[t];
+                        
+                        if (assignments >= 3) continue; // 限制每个目标最多分配3个武器
+                        
+                        const effectiveProb = killProb * Math.pow(0.8, assignments);
+                        const totalScore = score * effectiveProb;
+                        
+                        if (totalScore > bestScore) {
+                            bestScore = totalScore;
+                            bestTarget = t;
+                        }
+                    }
+                    
+                    if (bestTarget !== -1) {
+                        solution.assignment[w] = bestTarget;
+                        targetAssignments[bestTarget]++;
+                    }
+                }
+                
+                this.calculateFitness(solution);
+                return solution;
+            }
+            
+            calculateFitness(solution) {
+                const targetSurvivalProb = new Array(this.problem.numTargets).fill(1.0);
+                
+                for (let w = 0; w < this.problem.numWeapons; w++) {
+                    if (solution.assignment[w] !== -1) {
+                        const target = solution.assignment[w];
+                        targetSurvivalProb[target] *= (1.0 - this.problem.killProb[w][target]);
+                    }
+                }
+                
+                let totalValue = 0;
+                let totalThreatReduction = 0;
+                
+                for (let t = 0; t < this.problem.numTargets; t++) {
+                    const destructionProb = 1.0 - targetSurvivalProb[t];
+                    totalValue += destructionProb * this.problem.targetValues[t];
+                    totalThreatReduction += destructionProb * this.problem.threatValues[t];
+                }
+                
+                solution.totalValue = totalValue;
+                solution.totalThreatReduction = totalThreatReduction;
+                solution.fitness = totalValue + totalThreatReduction;
+            }
+            
+            showAssignments() {
+                this.clearAssignmentLines();
+                
+                for (let w = 0; w < this.solution.assignment.length; w++) {
+                    const targetId = this.solution.assignment[w];
+                    if (targetId !== -1) {
+                        this.createAssignmentLine(w, targetId);
+                    }
+                }
+                
+                this.renderState.needsUpdate = true;
+            }
+            
+            createAssignmentLine(weaponId, targetId) {
+                const weapon = this.weapons[weaponId];
+                const target = this.targets[targetId];
+                
+                const startPos = weapon.position.clone();
+                const endPos = target.position.clone();
+                const midPos = startPos.clone().add(endPos).multiplyScalar(0.5);
+                midPos.y += 10;
+                
+                const curve = new THREE.QuadraticBezierCurve3(startPos, midPos, endPos);
+                const points = curve.getPoints(50);
+                
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({ 
+                    color: 0x00d4ff,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const line = new THREE.Line(geometry, material);
+                line.userData = { type: 'assignment', weapon: weaponId, target: targetId };
+                
+                this.scene.add(line);
+                this.assignmentLines.push(line);
+            }
+            
+            toggleAnimation() {
+                if (this.isAnimating) {
+                    this.stopAnimation();
+                } else {
+                    this.startAnimation();
+                }
+            }
+            
+            startAnimation() {
+                if (!this.solution || this.isAnimating) return;
+                
+                this.isAnimating = true;
+                const animateBtn = document.getElementById('animateBtn');
+                if (animateBtn) {
+                    animateBtn.textContent = '⏸️ 停止动画';
+                }
+                
+                this.clearAssignmentLines();
+                this.animateAssignments();
+            }
+            
+            stopAnimation() {
+                this.isAnimating = false;
+                const animateBtn = document.getElementById('animateBtn');
+                if (animateBtn) {
+                    animateBtn.textContent = '▶️ 动画演示';
+                }
+                this.showAssignments();
+            }
+            
+            async animateAssignments() {
+                for (let w = 0; w < this.weapons.length && this.isAnimating; w++) {
+                    const targetId = this.solution.assignment[w];
+                    if (targetId !== -1) {
+                        this.createAssignmentLine(w, targetId);
+                        this.audioManager.play('fire');
+                        await this.delay(300);
+                    }
+                }
+                
+                if (this.isAnimating) {
+                    this.stopAnimation();
+                }
+            }
+            
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            updateProgress(progress) {
+                const progressFill = document.getElementById('progressFill');
+                if (progressFill) {
+                    progressFill.style.width = progress + '%';
+                }
+            }
+            
+            updateStats(computationTime = 0) {
+                if (this.solution) {
+                    const updateElement = (id, value) => {
+                        const element = document.getElementById(id);
+                        if (element) element.textContent = value;
+                    };
+                    
+                    updateElement('totalFitness', this.solution.fitness.toFixed(2));
+                    updateElement('totalValue', this.solution.totalValue.toFixed(2));
+                    updateElement('threatReduction', this.solution.totalThreatReduction.toFixed(2));
+                    
+                    const assignedWeapons = this.solution.assignment.filter(a => a !== -1).length;
+                    const assignmentRate = (assignedWeapons / this.problem.numWeapons * 100).toFixed(0);
+                    updateElement('assignmentRate', assignmentRate + '%');
+                    
+                    if (computationTime > 0) {
+                        updateElement('computationTime', computationTime + 'ms');
+                        
+                        const efficiency = this.calculateEfficiency(computationTime);
+                        updateElement('efficiency', efficiency);
+                    }
+                } else {
+                    // 重置统计数据
+                    ['totalFitness', 'totalValue', 'threatReduction', 'assignmentRate'].forEach(id => {
+                        const element = document.getElementById(id);
+                        if (element) element.textContent = id === 'assignmentRate' ? '0%' : '0.00';
+                    });
+                    
+                    const element = document.getElementById('efficiency');
+                    if (element) element.textContent = '-';
+                }
+            }
+            
+            calculateEfficiency(time) {
+                const baseScore = this.solution.fitness;
+                const maxPossibleScore = this.problem.numTargets * 100;
+                const scoreRatio = baseScore / maxPossibleScore;
+                const timeBonus = Math.max(0, 1 - time / 5000);
+                const efficiency = scoreRatio * timeBonus;
+                
+                const stars = Math.min(5, Math.ceil(efficiency * 5));
+                return '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
+            }
+            
+            resetCamera() {
+                this.cameraController.radius = 60;
+                this.cameraController.theta = 0;
+                this.cameraController.phi = Math.PI / 4;
+                this.updateCameraPosition();
+            }
+            
+            toggleParticles() {
+                if (this.starField) {
+                    this.starField.visible = this.renderState.particlesEnabled;
+                    this.renderState.needsUpdate = true;
+                }
+            }
+            
+            clearObjects() {
+                // 清除武器
+                this.weapons.forEach(weapon => {
+                    this.scene.remove(weapon);
+                });
+                this.weapons = [];
+                
+                // 清除目标
+                this.targets.forEach(target => {
+                    this.scene.remove(target);
+                });
+                this.targets = [];
+                
+                // 清除分配线
+                this.clearAssignmentLines();
+                
+                this.solution = null;
+                this.renderState.needsUpdate = true;
+            }
+            
+            clearAssignmentLines() {
+                this.assignmentLines.forEach(line => {
+                    this.scene.remove(line);
+                });
+                this.assignmentLines = [];
+            }
+            
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderState.needsUpdate = true;
+            }
+            
+            startRenderLoop() {
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    
+                    // 只在需要时渲染
+                    if (this.renderState.needsUpdate || this.isAnimating) {
+                        this.render();
+                        this.renderState.needsUpdate = false;
+                    }
+                    
+                    // 更新对象计数
+                    const objectCount = this.scene.children.length;
+                    this.performanceMonitor.updateObjectCount(objectCount);
+                };
+                animate();
+            }
+            
+            render() {
+                const time = Date.now() * 0.001;
+                
+                // 更新目标动画
+                this.targets.forEach((target, index) => {
+                    if (target.userData.originalY !== undefined) {
+                        target.position.y = target.userData.originalY + Math.sin(time + index) * 2;
+                        target.rotation.y = time * 0.5;
+                    }
+                });
+                
+                // 更新星空
+                if (this.starField && this.renderState.particlesEnabled) {
+                    this.starField.rotation.y = time * 0.01;
+                }
+                
+                this.renderer.render(this.scene, this.camera);
+            }
+            
+            showError(message) {
+                console.error(message);
+                // 这里可以添加错误提示UI
+            }
+        }
+        
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new OptimizedWTAVisualizer();
+        });
+    </script>
+</body>
+</html>

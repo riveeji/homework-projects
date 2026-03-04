@@ -1,0 +1,45 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "F:\\cpp\\2024.4.16\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{22512C70-39BD-4F82-99FD-FA18B1D5E59F}|2024.4.16\\2024.4.16.vcxproj|F:\\cpp\\2024.4.16\\2024.4.16\\1.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{22512C70-39BD-4F82-99FD-FA18B1D5E59F}|2024.4.16\\2024.4.16.vcxproj|solutionrelative:2024.4.16\\1.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "1.cpp",
+              "DocumentMoniker": "F:\\cpp\\2024.4.16\\2024.4.16\\1.cpp",
+              "RelativeDocumentMoniker": "2024.4.16\\1.cpp",
+              "ToolTip": "F:\\cpp\\2024.4.16\\2024.4.16\\1.cpp",
+              "RelativeToolTip": "2024.4.16\\1.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAQAAAAQAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-04-16T07:54:44.476Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

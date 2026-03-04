@@ -1,0 +1,87 @@
+﻿#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <limits>
+using namespace std;
+
+const int INF = 1e9;
+
+// 匈牙利算法求解最大权匹配（适合一对一分配）
+class Hungarian {
+public:
+    Hungarian(const vector<vector<int>>& cost) : n(cost.size()), cost(cost), u(n+1), v(n+1), p(n+1), way(n+1) {}
+
+    int solve(vector<int>& assignment) {
+        for (int i = 1; i <= n; ++i) {
+            p[0] = i;
+            vector<int> minv(n+1, INF);
+            vector<bool> used(n+1, false);
+            int j0 = 0;
+            do {
+                used[j0] = true;
+                int i0 = p[j0], delta = INF, j1 = 0;
+                for (int j = 1; j <= n; ++j) {
+                    if (!used[j]) {
+                        int cur = cost[i0-1][j-1] - u[i0] - v[j];
+                        if (cur < minv[j]) {
+                            minv[j] = cur;
+                            way[j] = j0;
+                        }
+                        if (minv[j] < delta) {
+                            delta = minv[j];
+                            j1 = j;
+                        }
+                    }
+                }
+                for (int j = 0; j <= n; ++j) {
+                    if (used[j]) {
+                        u[p[j]] += delta;
+                        v[j] -= delta;
+                    } else {
+                        minv[j] -= delta;
+                    }
+                }
+                j0 = j1;
+            } while (p[j0] != 0);
+            do {
+                int j1 = way[j0];
+                p[j0] = p[j1];
+                j0 = j1;
+            } while (j0);
+        }
+        assignment.resize(n);
+        for (int j = 1; j <= n; ++j) {
+            assignment[p[j]-1] = j-1;
+        }
+        return -v[0]; // 返回最大权匹配的权值
+    }
+
+private:
+    int n;
+    vector<vector<int>> cost;
+    vector<int> u, v, p, way;
+};
+
+int main() {
+    // 示例：3个武器，3个目标，cost[i][j]为武器i打目标j的“代价”（越小越好）
+    vector<vector<int>> cost = {
+        {4, 2, 8},
+        {2, 3, 7},
+        {3, 1, 6}
+    };
+
+    // 如果要最大化效能，可以将cost取负数
+    // for (auto& row : cost) for (auto& x : row) x = -x;
+
+    Hungarian hungarian(cost);
+    vector<int> assignment;
+    int result = hungarian.solve(assignment);
+
+    cout << "武器-目标分配结果：" << endl;
+    for (int i = 0; i < assignment.size(); ++i) {
+        cout << "武器" << i+1 << " -> 目标" << assignment[i]+1 << "，代价：" << cost[i][assignment[i]] << endl;
+    }
+    cout << "总最小代价：" << result << endl;
+
+    return 0;
+}

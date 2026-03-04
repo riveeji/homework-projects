@@ -1,0 +1,5 @@
+﻿  FileName.cpp
+F:\cpp\socket\socket\FileName.cpp(74,68): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+F:\cpp\socket\socket\FileName.cpp(116,81): error C2065: “socklen_t”: 未声明的标识符
+F:\cpp\socket\socket\FileName.cpp(116,91): error C2059: 语法错误:“)”
+F:\cpp\socket\socket\FileName.cpp(116,108): error C2143: 语法错误: 缺少“;”(在“{”的前面)

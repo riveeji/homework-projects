@@ -1,0 +1,45 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "F:\\cpp\\magic\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3F7CE1C6-1F6A-49AC-8495-F48E30259D1A}|magic\\magic.vcxproj|F:\\cpp\\magic\\magic\\FileName.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{3F7CE1C6-1F6A-49AC-8495-F48E30259D1A}|magic\\magic.vcxproj|solutionrelative:magic\\FileName.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "FileName.cpp",
+              "DocumentMoniker": "F:\\cpp\\magic\\magic\\FileName.cpp",
+              "RelativeDocumentMoniker": "magic\\FileName.cpp",
+              "ToolTip": "F:\\cpp\\magic\\magic\\FileName.cpp",
+              "RelativeToolTip": "magic\\FileName.cpp",
+              "ViewState": "AQIAAEoAAAAAAAAAAAAAAIoAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-03-17T09:48:22.559Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

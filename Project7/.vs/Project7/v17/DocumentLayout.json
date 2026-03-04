@@ -1,0 +1,76 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "F:\\cpp\\Project7\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{07DC7585-6FF4-4CEF-BF29-23E394022DBB}|Project7\\Project7.vcxproj|F:\\cpp\\Project7\\Project7\\FileName.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{07DC7585-6FF4-4CEF-BF29-23E394022DBB}|Project7\\Project7.vcxproj|solutionrelative:Project7\\FileName.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07DC7585-6FF4-4CEF-BF29-23E394022DBB}|Project7\\Project7.vcxproj|F:\\cpp\\Project7\\Project7\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{07DC7585-6FF4-4CEF-BF29-23E394022DBB}|Project7\\Project7.vcxproj|solutionrelative:Project7\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07DC7585-6FF4-4CEF-BF29-23E394022DBB}|Project7\\Project7.vcxproj|C:\\Users\\86192\\Downloads\\\u6807\u5934.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "main.cpp",
+              "DocumentMoniker": "F:\\cpp\\Project7\\Project7\\main.cpp",
+              "RelativeDocumentMoniker": "Project7\\main.cpp",
+              "ToolTip": "F:\\cpp\\Project7\\Project7\\main.cpp",
+              "RelativeToolTip": "Project7\\main.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAIAAAAKAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-04-06T09:41:08.709Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "FileName.cpp",
+              "DocumentMoniker": "F:\\cpp\\Project7\\Project7\\FileName.cpp",
+              "RelativeDocumentMoniker": "Project7\\FileName.cpp",
+              "ToolTip": "F:\\cpp\\Project7\\Project7\\FileName.cpp*",
+              "RelativeToolTip": "Project7\\FileName.cpp*",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAUAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-04-06T09:40:59.752Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "\u6807\u5934.h",
+              "DocumentMoniker": "C:\\Users\\86192\\Downloads\\\u6807\u5934.h",
+              "ToolTip": "C:\\Users\\86192\\Downloads\\\u6807\u5934.h",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-04-06T09:35:23.481Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

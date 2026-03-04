@@ -1,0 +1,13 @@
+Algorithm,Problem Size,Fitness,Execution Time,Total Value,Threat Reduction
+Genetic Algorithm,5,485.571,0.459,240.783,244.788
+Simulated Annealing,5,489.027,0.005,245.555,243.473
+Genetic Algorithm,10,1212.23,0.534,546.193,666.034
+Simulated Annealing,10,1206.68,0.004,545.295,661.383
+Genetic Algorithm,20,2105.3,0.601,996.54,1108.76
+Simulated Annealing,20,2168.4,0.004,1013.4,1155
+Genetic Algorithm,30,3044.36,0.672,1561.77,1482.59
+Simulated Annealing,30,3175.61,0.006,1587.31,1588.3
+Genetic Algorithm,40,3806.62,0.754,1850.59,1956.03
+Simulated Annealing,40,4001.06,0.006,1922.6,2078.46
+Genetic Algorithm,50,4818.6,0.84,2397.51,2421.09
+Simulated Annealing,50,5203.57,0.005,2561.89,2641.68
